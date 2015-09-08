@@ -1,0 +1,40 @@
+template:
+    directory: template
+
+scripts:
+    before:
+        - lessc --clean-css template/less/main.less template/css/all.min.css
+
+middlewares:
+    - name: Router
+      description: "HTTP router for dispatching the request to controllers."
+      github: stratifyphp/router
+    - name: PrefixRouter
+      description: "Route HTTP requests to sub-middlewares based on URL prefixes."
+      github: stratifyphp/router
+    - name: CSRF
+      description: "Protect forms against CSRF attacks."
+      github: slimphp/Slim-Csrf
+    - name: HttpCache
+      description: "Set HTTP cache headers on the response."
+      github: slimphp/Slim-HttpCache
+
+documentation:
+    components:
+        section: Components
+        items:
+            http:
+                text: Http
+                url: docs/component/http.html
+            router:
+                text: Router
+                url: docs/component/router.html
+    framework:
+        section: Framework
+        items:
+            getting-started:
+                text: Getting started
+                url: docs/framework/getting-started.html
+            extended-callables:
+                text: Extended callables
+                url: docs/framework/extended-callables.html

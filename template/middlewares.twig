@@ -1,0 +1,23 @@
+{% extends "default.twig" %}
+
+{% block content %}
+
+    <div class="container">
+
+        <p>
+            Compose your application using any compatible middleware.
+        </p>
+
+        <ul class="list-group">
+            {% for middleware in middlewares %}
+                <li class="list-group-item">
+                    <a href="https://github.com/{{ middleware.github }}" class="badge">{{ middleware.github }}</a>
+                    <h4 class="list-group-item-heading">{{ middleware.name }}</h4>
+                    <p class="list-group-item-text">{{ middleware.description }}</p>
+                </li>
+            {% endfor %}
+        </ul>
+
+    </div>
+
+{% endblock %}
