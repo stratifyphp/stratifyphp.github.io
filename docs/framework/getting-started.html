@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Stratify - Your application, your architecture</title>
+
+            <link href="http://fonts.googleapis.com/css?family=Abel:400|Oswald:300,400,700" media="all" rel="stylesheet" type="text/css">
+        <link href="/css/highlight.github.css" rel="stylesheet">
+        <link href="/css/all.min.css" rel="stylesheet">
+    </head>
+<body>
+
+    <header>
+        <div class="navbar navbar-default navbar-fixed-top">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#top-navigation">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="/">Stratify</a>
+                </div>
+                <div class="collapse navbar-collapse" id="top-navigation">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a href="/docs/">Documentation</a></li>
+                        <li><a href="/middlewares/">Middlewares</a></li>
+                        <li><a class="github" href="https://github.com/stratifyphp"><i class="fa fa-github"></i></a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    
+    <div class="container documentation">
+
+        <div class="sidebar">
+            <ul>
+                                    <li>
+                        Components
+
+                        <ul>
+                                                            <li class="">
+                                    <a href="/docs/component/http.html">
+                                        Http
+                                    </a>
+                                </li>
+                                                            <li class="">
+                                    <a href="/docs/component/router.html">
+                                        Router
+                                    </a>
+                                </li>
+                                                    </ul>
+                    </li>
+                                    <li>
+                        Framework
+
+                        <ul>
+                                                            <li class="">
+                                    <a href="/docs/framework/getting-started.html">
+                                        Getting started
+                                    </a>
+                                </li>
+                                                            <li class="">
+                                    <a href="/docs/framework/extended-callables.html">
+                                        Extended callables
+                                    </a>
+                                </li>
+                                                    </ul>
+                    </li>
+                            </ul>
+        </div>
+
+        <article>
+            <h1 id="getting-started">Getting started</h1>
+<h2 id="installation">Installation</h2>
+<p>Please note Stratify requires <strong>PHP 7</strong>.</p>
+<p>When creating a new project using Stratify, you can start by requiring the framework:</p>
+<pre><code>composer require stratify/framework</code></pre>
+<h2 id="hello-world">Hello world</h2>
+<p>Now that the framework is installed, it is up to you to create your application's architecture. To help you get started, let's write a very simple application.</p>
+<p>Create a <code>index.php</code> file that will receive all HTTP requests for your application:</p>
+<pre><code class="language-php">&lt;?php
+
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+
+require __DIR__ . '/vendor/autoload.php';
+
+$http = function (ServerRequestInterface $request, ResponseInterface $response, callable $next) {
+    $response-&gt;getBody()-&gt;write('Hello world!');
+    return $response;
+};
+
+$app = new Stratify\Http\Application($http);
+$app-&gt;run();</code></pre>
+<p>As you can guess, this application will simply display &quot;Hello world!&quot;. The application in itself is very simple: it is composed of <strong>one middleware</strong> whose role is to return a response.</p>
+<p><strong>The key in creating your application is to compose middlewares.</strong> For example you can replace the application's middleware by a <em>middleware pipe</em>, a router, etc. Let's move on the next section to go further.</p>
+<h2 id="micro-application">Micro-application</h2>
+<p>While the previous &quot;Hello world&quot; didn't look very useful, it will show you one core feature of Stratify: scalability. You are able to scale from a nano-application to a very complex one very simply.</p>
+<p>To create a useful micro-application, let's replace the core middleware by <strong>a router</strong>:</p>
+<pre><code class="language-php">use function Stratify\Framework\router;
+
+require __DIR__ . '/vendor/autoload.php';
+
+$http = router([
+    '/' =&gt; function () {
+        return 'Welcome to the home page.';
+    },
+    '/number/{number}' =&gt; function ($number) {
+        return 'You have asked for number ' . $number;
+    },
+]);
+
+$app = new Stratify\Http\Application($http);
+$app-&gt;run();</code></pre>
+<p>2 things to note:</p>
+<ul>
+<li>the <code>router()</code> function is a helper to create a preconfigured <a href="../component/router.html">Router</a> instance</li>
+<li>router controllers are middlewares, but with (optional) sugar to write them with pleasure</li>
+</ul>
+<p>To learn all about routing in the framework, read the <a href="routing.html">routing</a> guide.</p>
+<h2 id="composing-your-application-with-middlewares">Composing your application with middlewares</h2>
+<p>As it is, this micro-application does the job but misses a basic feature: error handling. Let's add a (very basic) error handler to demonstrate how to compose middlewares in a more advanced way.</p>
+<pre><code class="language-php">use function Stratify\Framework\router;
+use function Stratify\Framework\pipe;
+
+// ...
+
+$http = pipe([
+
+    // Error handling
+    function ($request, $response, $next) {
+        try {
+            return $next($request, $response);
+        } catch (\Exception $e) {
+            $message = 'An error occurred: '.$e-&gt;getMessage();
+            $response-&gt;getBody()-&gt;write($message);
+            return $response-&gt;withStatus(500); // HTTP status 500
+        }
+    },
+
+    router([
+        // ...
+    ]),
+
+]);</code></pre>
+<p>We created a <strong>middleware pipe</strong>: each middleware is executed in sequence until one returns a response. That allows to intercept, replace or decorate the next middlewares.</p>
+<p>For our example, our error handler runs the next middleware (the rotuer) in a <code>try/catch</code>. In case of an exception, it will catch it and return an error response.</p>
+<p><strong>Note:</strong> this error handler middleware is just an example for learning. Stratify ships with a complete <a href="error-handling.html">error handler module</a> that will be introduced in the next paragraph (so keep on reading).</p>
+<h2 id="modules">Modules</h2>
+        </article>
+
+    </div>
+
+
+            <footer>
+            <div class='container'>
+                                    <p>
+                        A question? Unsatisfied with the documentation?
+                        Please <a href="https://github.com/PHP-DI/PHP-DI/issues/new">create an issue</a>
+                        or chat on
+                        <a href="https://gitter.im/PHP-DI/PHP-DI">Gitter</a> or
+                        <a href="https://twitter.com/phpdi">Twitter</a>.
+                    </p>
+                                <p>
+                    By <a href="http://mnapoli.fr/">Matthieu Napoli</a>
+                    and <a href="https://github.com/PHP-DI/PHP-DI/graphs/contributors">contributors</a>
+                    |
+                    Website generated with
+                    <a href="http://mnapoli.fr/Couscous/" target="_blank">Couscous</a>.
+                </p>
+            </div>
+        </footer>
+    
+            <script src="/bower_components/jquery/dist/jquery.min.js"></script>
+        <script src="/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/highlight.min.js"></script>
+
+        <script>
+            $(function() {
+                hljs.initHighlightingOnLoad();
+            });
+        </script>
+    
+</body>
+</html>
