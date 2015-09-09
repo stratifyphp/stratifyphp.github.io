@@ -8,8 +8,8 @@
     <title>Stratify - Your application, your architecture</title>
 
             <link href="http://fonts.googleapis.com/css?family=Abel:400|Oswald:300,400,700" media="all" rel="stylesheet" type="text/css">
-        <link href="/css/highlight.github.css" rel="stylesheet">
-        <link href="/css/all.min.css" rel="stylesheet">
+        <link href="http://stratifyphp.github.io/css/highlight.github.css" rel="stylesheet">
+        <link href="http://stratifyphp.github.io/css/all.min.css" rel="stylesheet">
     </head>
 <body>
 
@@ -23,12 +23,12 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a class="navbar-brand" href="/">Stratify</a>
+                    <a class="navbar-brand" href="http://stratifyphp.github.io/">Stratify</a>
                 </div>
                 <div class="collapse navbar-collapse" id="top-navigation">
                     <ul class="nav navbar-nav navbar-right">
-                        <li><a href="/docs/">Documentation</a></li>
-                        <li><a href="/middlewares/">Middlewares</a></li>
+                        <li><a href="http://stratifyphp.github.io/docs/">Documentation</a></li>
+                        <li><a href="http://stratifyphp.github.io/middlewares/">Middlewares</a></li>
                         <li><a class="github" href="https://github.com/stratifyphp"><i class="fa fa-github"></i></a></li>
                     </ul>
                 </div>
@@ -46,12 +46,12 @@
 
                         <ul>
                                                             <li class="">
-                                    <a href="/docs/component/http.html">
+                                    <a href="http://stratifyphp.github.io/docs/component/http.html">
                                         Http
                                     </a>
                                 </li>
                                                             <li class="">
-                                    <a href="/docs/component/router.html">
+                                    <a href="http://stratifyphp.github.io/docs/component/router.html">
                                         Router
                                     </a>
                                 </li>
@@ -62,12 +62,12 @@
 
                         <ul>
                                                             <li class="">
-                                    <a href="/docs/framework/getting-started.html">
+                                    <a href="http://stratifyphp.github.io/docs/framework/getting-started.html">
                                         Getting started
                                     </a>
                                 </li>
                                                             <li class="">
-                                    <a href="/docs/framework/extended-callables.html">
+                                    <a href="http://stratifyphp.github.io/docs/framework/extended-callables.html">
                                         Extended callables
                                     </a>
                                 </li>
@@ -100,6 +100,7 @@ $http = function (ServerRequestInterface $request, ResponseInterface $response, 
 $app = new Stratify\Http\Application($http);
 $app-&gt;run();</code></pre>
 <p>As you can guess, this application will simply display &quot;Hello world!&quot;. The application in itself is very simple: it is composed of <strong>one middleware</strong> whose role is to return a response.</p>
+<p>A middleware is a callable that takes PSR-7 request and response object and returns a response. It also takes a &quot;next&quot; middleware to call in case the current middleware cannot provide a response.</p>
 <p><strong>The key in creating your application is to compose middlewares.</strong> For example you can replace the application's middleware by a <em>middleware pipe</em>, a router, etc. Let's move on the next section to go further.</p>
 <h2 id="micro-application">Micro-application</h2>
 <p>While the previous &quot;Hello world&quot; didn't look very useful, it will show you one core feature of Stratify: scalability. You are able to scale from a nano-application to a very complex one very simply.</p>
@@ -152,8 +153,64 @@ $http = pipe([
 ]);</code></pre>
 <p>We created a <strong>middleware pipe</strong>: each middleware is executed in sequence until one returns a response. That allows to intercept, replace or decorate the next middlewares.</p>
 <p>For our example, our error handler runs the next middleware (the rotuer) in a <code>try/catch</code>. In case of an exception, it will catch it and return an error response.</p>
-<p><strong>Note:</strong> this error handler middleware is just an example for learning. Stratify ships with a complete <a href="error-handling.html">error handler module</a> that will be introduced in the next paragraph (so keep on reading).</p>
+<p><strong>Note:</strong> this error handler middleware is just an example for learning. Stratify ships with a complete <a href="error-handling.html">error handler module</a> that will be introduced below (so keep on reading).</p>
 <h2 id="modules">Modules</h2>
+<p>A Stratify module boils down to one thing: <strong>a configuration file</strong>. With that configuration, a module is able to expose pre-configured objects (services, middlewares, …) and offer extension points on these objects.</p>
+<p><em>Note:</em> if you are confused between modules and middlewares, it's simple: a middleware is a class/function, a module is a whole package (containing a configuration + classes). A middleware will often be distributed in a module so that it comes with a pre-configuration.</p>
+<h3 id="example">Example</h3>
+<p>Here is an example of a configuration for a very basic &quot;Twig module&quot;:</p>
+<pre><code class="language-php">return [
+    Twig_Environment::class =&gt; function ($container) {
+        $twig = new Twig_Environment(new PuliTemplateLoader);
+        $twig-&gt;setExtensions($container-&gt;get('twig.extensions'));
+        return $twig;
+    },
+    'twig.extensions' =&gt; [],
+];</code></pre>
+<p>In this example, the module configuration:</p>
+<ul>
+<li>defines how to create <code>Twig_Environment</code> so that Twig can be injected and used in the application</li>
+<li>exposes the <code>twig.extensions</code> array (empty by default) so that you can register extensions in your application's config. Here is an example on how you can use that extension point to register your custom Twig extension:
+<pre><code class="language-php">return [
+    'twig.extensions' =&gt; add([
+        get(MyTwigExtension::class),
+    ]),
+];</code></pre></li>
+</ul>
+<h3 id="usage">Usage</h3>
+<p>To use a module, you need to install it with Composer and then register it in the application:</p>
+<pre><code class="language-php">$modules = [
+    'module1',
+    'module2',
+    'module3',
+];
+
+$app = new Application($http, $modules);</code></pre>
+<h3 id="error-handling">Error handling</h3>
+<p>As we mentioned above, Stratify offers a &quot;error handling&quot; module that contains an error handler middleware (as well as other utilities). Since it's already installed with the <code>stratify/framework</code> package let's register it:</p>
+<pre><code class="language-php">$modules = [
+    'error-handler',
+];
+
+$http = ...;
+
+$app = new Application($http, $modules);</code></pre>
+<p>Now that it's config is registered, we can use the middleware in our <code>$http</code> architecture:</p>
+<pre><code class="language-php">use Stratify\ErrorHandlerModule\ErrorHandlerMiddleware;
+
+// ...
+
+$http = pipe([
+    ErrorHandlerMiddleware::class,
+
+    router([
+        // ...
+    ]),
+]);
+
+$app = new Application($http, $modules);</code></pre>
+<p>With that new architecture, the <code>ErrorHandlerMiddleware</code> will be created and invoked before the router so that it can catch any exception that happens in middlewares registered after it.</p>
+<p>Most of the time you will want to have the error handler middleware run as the first middleware, so that it can catch all exceptions.</p>
         </article>
 
     </div>
@@ -178,8 +235,8 @@ $http = pipe([
             </div>
         </footer>
     
-            <script src="/bower_components/jquery/dist/jquery.min.js"></script>
-        <script src="/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+            <script src="http://stratifyphp.github.io/bower_components/jquery/dist/jquery.min.js"></script>
+        <script src="http://stratifyphp.github.io/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/highlight.min.js"></script>
 
         <script>
