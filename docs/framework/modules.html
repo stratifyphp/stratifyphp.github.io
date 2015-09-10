@@ -82,42 +82,78 @@
         </div>
 
         <article>
-            <h1 id="the-http-component">The Http component</h1>
-<p>The Http component is a non-opinionated package to write an HTTP application. Unlike the whole Stratify framework, it provides only the generic core of an HTTP application. It makes it good for:</p>
+            <h1 id="modules">Modules</h1>
+<p>A Stratify module boils down to:</p>
 <ul>
-<li>building very fast and lightweight micro-services or micro-applications</li>
-<li>building your application with your own architecture</li>
-<li>building a framework on top of it</li>
+<li>a lower-case name (e.g. <code>my-module</code>)</li>
+<li>a <a href="http://docs.puli.io/en/latest/glossary.html#glossary-package">Puli package</a> whose Puli root path is the module name (e.g. <code>/my-module</code>)</li>
+<li>a <a href="http://php-di.org/">PHP-DI</a> configuration file inside that package (located at <code>/my-module/config/config.php</code>)</li>
 </ul>
-<h2 id="concept">Concept</h2>
-<p>The Http package relies on a single concept: <strong>middlewares</strong>. An HTTP application runs by simply <strong>calling a middleware</strong>.</p>
-<pre><code class="language-php">$app = new Application($middleware);
-$app-&gt;run();</code></pre>
-<p>The simplest middleware could look like this:</p>
-<pre><code class="language-php">$middleware = function (ServerRequestInterface $request, ResponseInterface $response, callable $next) {
-    $response-&gt;getBody()-&gt;write('Hello world!');
-    return $response;
-}
-$app = new Application($middleware);
-$app-&gt;run();</code></pre>
-<p>You will note that such an application doesn't contain any router. The application is extremely simple and makes no assertion for you. If you don't need a router, you can avoid the overhead of it.</p>
-<p>You could also consider implementing your own very specific router (and optimize it to your heart's content):</p>
-<pre><code class="language-php">$middleware = function (ServerRequestInterface $request, ResponseInterface $response, callable $next) {
-    switch ($request-&gt;getRequestTarget()) {
-        case '/':
-            $response-&gt;getBody()-&gt;write('Home');
-            break;
-        case '/deploy':
-            $response-&gt;getBody()-&gt;write('Deploying');
-            break;
-        default:
-            return $next($request, $response);
-    }
-    return $response;
-};</code></pre>
-<p>As you can see, a lot of freedom and no overhead.</p>
-<h2 id="composing-middlewares">Composing middlewares</h2>
-<p>Writing an application with one callable can work for very specific micro-services, but can be limited. If you want to create a more complex application, you can take full advantages of middlewares by piping them.</p>
+<p>A module can also contain more things like PHP classes (e.g. middlewares), resources (views, JS, CSS, …).</p>
+<p>The Puli package allows to expose resources (views, JS, CSS, …). It can be seen as PSR-4/autoloading for resources. That will be used for example to find and load the module's configuration file.</p>
+<p>With the configuration, a module is able to expose pre-configured objects (services, middlewares, …) and offer extension points on these objects.</p>
+<h2 id="using-a-module">Using a module</h2>
+<p>To use a module, you need to install it with Composer and then register it in the application:</p>
+<pre><code class="language-php">$modules = [
+    'module1',
+    'module2',
+    'module3',
+    'app',
+];
+
+$app = new Application($http, $modules);</code></pre>
+<p>That will automatically register the Puli packages as well as PHP-DI's config files.</p>
+<p>Note that each module config is registered in the order of the list. If some modules override others, you need to register them <em>after</em> the module they override. For example, it is highly recommended to register the <code>app</code> module last to be able to override everything in your local configuration.</p>
+<h2 id="the">The <code>app</code> module</h2>
+<p>While modules can be reusable and isolated Composer packages, they can also be full applications.</p>
+<p>As a matter of fact, you should write an application-style project <em>as a Stratify module</em>. Just like <a href="http://symfony.com/doc/current/best_practices/creating-the-project.html#application-bundles">Symfony's <code>AppBundle</code></a>, you are encouraged to use the generic <code>app</code> name for that application module.</p>
+<h2 id="writing-a-module">Writing a module</h2>
+<h3 id="file-layout">File layout</h3>
+<pre><code>src/
+    ...
+res/
+    config/
+        config.php
+    ...
+composer.json
+puli.json</code></pre>
+<p>The <code>composer.json</code> file contains the package information (name, license, …) as well as PSR-4 configuration to autoload PHP classes stored in <code>src/</code>.</p>
+<p>The <code>puli.json</code> file contains configuration for mapping virtual Puli paths (<code>/my-module/…</code>) to filesystem paths (<code>res/…</code>). To create it, use the <code>puli map</code> command:</p>
+<pre><code class="language-bash">puli map /my-module res/</code></pre>
+<h3 id="configuration">Configuration</h3>
+<p>The module's configuration is stored in <code>res/config/config.php</code>. The syntax you can use is documented in <a href="http://php-di.org/doc/php-definitions.html">PHP-DI's documentation</a>.</p>
+<h4 id="example">Example</h4>
+<p>Here is an example of a configuration for a very basic &quot;Twig module&quot;:</p>
+<pre><code class="language-php">return [
+    Twig_Environment::class =&gt; function ($container) {
+        $twig = new Twig_Environment(new PuliTemplateLoader);
+        $twig-&gt;setExtensions($container-&gt;get('twig.extensions'));
+        return $twig;
+    },
+    'twig.extensions' =&gt; [],
+];</code></pre>
+<p>In this example, the module configuration:</p>
+<ul>
+<li>defines how to create <code>Twig_Environment</code> so that Twig can be injected and used in the application</li>
+<li>exposes the <code>twig.extensions</code> array (empty by default) so that you can register extensions in your application's config. Here is an example on how you can use that extension point to register your custom Twig extension:
+<pre><code class="language-php">return [
+    'twig.extensions' =&gt; add([
+        get(MyTwigExtension::class),
+    ]),
+];</code></pre></li>
+</ul>
+<p>Note that this example shouldn't be actually used: Stratify provides a Twig module already.</p>
+<h3 id="resources">Resources</h3>
+<p>Resources are stored in the <code>res/</code> directory. Resources can be anything that isn't a PHP class: configuration, assets, translations, views, … You are encouraged to follow <a href="http://docs.puli.io/en/latest/repository/directory-layout.html">Puli's recommended file layout</a>:</p>
+<pre><code class="language-bash">res/
+    config/
+    public/
+        css/
+        js/
+        images/
+    trans/ # translation files
+    views/ # Twig/Blade/… templates</code></pre>
+<p>All module resources can be accessed using Puli and its virtual &quot;Puli paths&quot;, for example: <code>/module-name/public/js/main.js</code>. Read more about it in <a href="http://docs.puli.io/en/latest/repository/introduction.html#how-it-works">Puli's documentation</a>.</p>
         </article>
 
     </div>
