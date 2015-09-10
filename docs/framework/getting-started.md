@@ -4,20 +4,28 @@ layout: documentation
 
 # Getting started
 
-## Requirements
-
-Stratify requires:
-
-- **PHP 7**
-- [Composer](https://getcomposer.org/doc/00-intro.md)
-- [Puli](http://docs.puli.io/en/latest/installation.html#installing-the-puli-cli)
+Please note that Stratify requires **PHP 7**, [Composer](https://getcomposer.org/doc/00-intro.md) and [Puli](http://docs.puli.io/en/latest/installation.html#installing-the-puli-cli).
 
 ## Installation
 
-When creating a new project using Stratify, you can start by requiring the framework:
+To create a new project using Stratify, start by requiring the framework and Puli's Composer plugin:
+
+```json
+{
+    "require": {
+        "stratify/framework": "@dev",
+        "puli/composer-plugin": "^1.0"
+    },
+    "minimum-stability": "beta"
+}
+```
+
+The "beta" minimum stability is needed because Puli is not yet stable.
+
+Now run:
 
 ```
-composer require stratify/framework
+composer install
 ```
 
 ## Hello world
