@@ -37,6 +37,9 @@ documentation:
             getting-started:
                 text: Getting started
                 url: docs/framework/getting-started.html
+            modules:
+                text: Modules
+                url: docs/framework/modules.html
             extended-callables:
                 text: Extended callables
                 url: docs/framework/extended-callables.html

@@ -83,7 +83,7 @@ $app->run();
 
 2 things to note:
 
-- the `router()` function is a helper to create a preconfigured [Router](../component/router.md) instance
+- the `router()` function is a helper to create a pre-configured [Router](../component/router.md) instance
 - router controllers are middlewares, but with (optional) sugar to write them with pleasure
 
 To learn all about routing in the framework, read the [routing](routing.md) guide.
@@ -120,60 +120,17 @@ $http = pipe([
 
 We created a **middleware pipe**: each middleware is executed in sequence until one returns a response. That allows to intercept, replace or decorate the next middlewares.
 
-For our example, our error handler runs the next middleware (the rotuer) in a `try/catch`. In case of an exception, it will catch it and return an error response.
+For our example, our error handler runs the next middleware (the router) in a `try/catch`. In case of an exception, it will catch it and return an error response.
 
 **Note:** this error handler middleware is just an example for learning. Stratify ships with a complete [error handler module](error-handling.md) that will be introduced below (so keep on reading).
 
 ## Modules
 
-A Stratify module boils down to one thing: **a configuration file**. With that configuration, a module is able to expose pre-configured objects (services, middlewares, …) and offer extension points on these objects.
+Let's get to the next level and make use of [Stratify modules](modules.md). Modules are reusable packages that can provide you PHP classes (middlewares, libraries, …), resources (assets, views, …) and configuration.
 
-*Note:* if you are confused between modules and middlewares, it's simple: a middleware is a class/function, a module is a whole package (containing a configuration + classes). A middleware will often be distributed in a module so that it comes with a pre-configuration.
+Instead of using our basic error handler shown above, we will instead use Stratify's error handler module. This module provides a middleware that will render a nice error page in case of an exception.
 
-### Example
-
-Here is an example of a configuration for a very basic "Twig module":
-
-```php
-return [
-    Twig_Environment::class => function ($container) {
-        $twig = new Twig_Environment(new PuliTemplateLoader);
-        $twig->setExtensions($container->get('twig.extensions'));
-        return $twig;
-    },
-    'twig.extensions' => [],
-];
-```
-
-In this example, the module configuration:
-
-- defines how to create `Twig_Environment` so that Twig can be injected and used in the application
-- exposes the `twig.extensions` array (empty by default) so that you can register extensions in your application's config. Here is an example on how you can use that extension point to register your custom Twig extension:
-    ```php
-    return [
-        'twig.extensions' => add([
-            get(MyTwigExtension::class),
-        ]),
-    ];
-    ```
-
-### Usage
-
-To use a module, you need to install it with Composer and then register it in the application:
-
-```php
-$modules = [
-    'module1',
-    'module2',
-    'module3',
-];
-
-$app = new Application($http, $modules);
-```
-
-### Error handling
-
-As we mentioned above, Stratify offers a "error handling" module that contains an error handler middleware (as well as other utilities). Since it's already installed with the `stratify/framework` package let's register it:
+Since it's already installed with the `stratify/framework` package let's directly register it:
 
 ```php
 $modules = [
@@ -185,12 +142,14 @@ $http = ...;
 $app = new Application($http, $modules);
 ```
 
-Now that it's config is registered, we can use the middleware in our `$http` architecture:
+Registering a module means registering its configuration. So now that it's configuration is registered, we can use the "error handler" middleware in our `$http` architecture:
 
 ```php
 use Stratify\ErrorHandlerModule\ErrorHandlerMiddleware;
 
-// ...
+$modules = [
+    'error-handler',
+];
 
 $http = pipe([
     ErrorHandlerMiddleware::class,
@@ -205,4 +164,8 @@ $app = new Application($http, $modules);
 
 With that new architecture, the `ErrorHandlerMiddleware` will be created and invoked before the router so that it can catch any exception that happens in middlewares registered after it.
 
-Most of the time you will want to have the error handler middleware run as the first middleware, so that it can catch all exceptions.
+TODO: `app` module
+
+## What's next
+
+- learn about [Modules](modules.md)
