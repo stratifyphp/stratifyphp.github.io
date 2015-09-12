@@ -163,7 +163,72 @@ $app = new Application($http, $modules);
 
 With that new architecture, the `ErrorHandlerMiddleware` will be created and invoked before the router so that it can catch any exception that happens in middlewares registered after it.
 
-TODO: `app` module
+## Templates
+
+Let's use the Twig templating engine to be able to render beautiful HTML pages:
+
+```
+composer require stratify/twig-module
+```
+
+Once installed, register the module:
+
+```php
+$modules = [
+    'error-handler',
+    'twig',
+];
+```
+
+You can now inject the `Twig_Environment` instance in your controllers (or any other service). For example:
+
+```php
+    router([
+        '/' => function (Twig_Environment $twig) {
+            return $twig->render(...);
+        },
+    ]),
+```
+
+Now all you need is being able to store you templates and let Twig find them. Carry on!
+
+## The `app` module
+
+Just like the reusable Composer packages, your project should be a module.
+
+TODO
+
+## Recap
+
+Your `index.php` file should look like this now:
+
+```php
+<?php
+
+use Stratify\ErrorHandlerModule\ErrorHandlerMiddleware;
+
+require __DIR__ . '/vendor/autoload.php';
+
+$modules = [
+    'error-handler',
+    'twig',
+];
+
+$http = pipe([
+    ErrorHandlerMiddleware::class,
+
+    router([
+        '/' => function () {
+            return 'Welcome to the home page.';
+        },
+        '/number/{number}' => function ($number) {
+            return 'You have asked for number ' . $number;
+        },
+    ]),
+]);
+
+$app = new Application($http, $modules);
+```
 
 ## What's next
 
