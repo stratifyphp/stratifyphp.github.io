@@ -85,15 +85,14 @@
             <h1 id="getting-started">Getting started</h1>
 <p>Please note that Stratify requires <strong>PHP 7</strong>, <a href="https://getcomposer.org/doc/00-intro.html">Composer</a> and <a href="http://docs.puli.io/en/latest/installation.html#installing-the-puli-cli">Puli</a>.</p>
 <h2 id="installation">Installation</h2>
-<p>To create a new project using Stratify, start by requiring the framework and Puli's Composer plugin:</p>
+<p>To create a new project using Stratify, start with the following <code>composer.json</code>:</p>
 <pre><code class="language-json">{
     "require": {
-        "stratify/framework": "@dev",
-        "puli/composer-plugin": "^1.0"
+        "stratify/framework": "@dev"
     },
     "minimum-stability": "beta"
 }</code></pre>
-<p>The &quot;beta&quot; minimum stability is needed because Puli is not yet stable.</p>
+<p>The &quot;beta&quot; minimum stability is needed because Puli is not stable yet.</p>
 <p>Now run:</p>
 <pre><code>composer install</code></pre>
 <h2 id="hello-world">Hello world</h2>
@@ -196,7 +195,51 @@ $http = pipe([
 
 $app = new Application($http, $modules);</code></pre>
 <p>With that new architecture, the <code>ErrorHandlerMiddleware</code> will be created and invoked before the router so that it can catch any exception that happens in middlewares registered after it.</p>
-<p>TODO: <code>app</code> module</p>
+<h2 id="templates">Templates</h2>
+<p>Let's use the Twig templating engine to be able to render beautiful HTML pages:</p>
+<pre><code>composer require stratify/twig-module</code></pre>
+<p>Once installed, register the module:</p>
+<pre><code class="language-php">$modules = [
+    'error-handler',
+    'twig',
+];</code></pre>
+<p>You can now inject the <code>Twig_Environment</code> instance in your controllers (or any other service). For example:</p>
+<pre><code class="language-php">    router([
+        '/' =&gt; function (Twig_Environment $twig) {
+            return $twig-&gt;render(...);
+        },
+    ]),</code></pre>
+<p>Now all you need is being able to store you templates and let Twig find them. Carry on!</p>
+<h2 id="the">The <code>app</code> module</h2>
+<p>Just like the reusable Composer packages, your project should be a module.</p>
+<p>TODO</p>
+<h2 id="recap">Recap</h2>
+<p>Your <code>index.php</code> file should look like this now:</p>
+<pre><code class="language-php">&lt;?php
+
+use Stratify\ErrorHandlerModule\ErrorHandlerMiddleware;
+
+require __DIR__ . '/vendor/autoload.php';
+
+$modules = [
+    'error-handler',
+    'twig',
+];
+
+$http = pipe([
+    ErrorHandlerMiddleware::class,
+
+    router([
+        '/' =&gt; function () {
+            return 'Welcome to the home page.';
+        },
+        '/number/{number}' =&gt; function ($number) {
+            return 'You have asked for number ' . $number;
+        },
+    ]),
+]);
+
+$app = new Application($http, $modules);</code></pre>
 <h2 id="whats-next">What's next</h2>
 <ul>
 <li>learn about <a href="modules.html">Modules</a></li>
