@@ -55,3 +55,33 @@ As you can see, a lot of freedom and no overhead.
 ## Composing middlewares
 
 Writing an application with one callable can work for very specific micro-services, but can be limited. If you want to create a more complex application, you can take full advantages of middlewares by piping them.
+
+```php
+$middleware = new MiddlewarePipe([
+
+    function ($request, $response, $next) {
+        $res->getBody()->write('Hello');
+        return $next($req, $res);        // call the next middleware
+    },
+
+    function ($request, $response, $next) {
+        $res->getBody()->write(' world');
+        return $res;
+    },
+
+]);
+
+$app = new Application($middleware);
+$app->run();
+// The application will always return "Hello world" as a response
+```
+
+Each middleware in the pipe must return a response. To do this, it can either:
+
+- build the response
+- call the next middleware in the pipe and return the result
+- call the next middleware in the pipe, play with the response and return it
+
+That allows you to add any behavior you want **before or after** the request is processed by another middleware. You can also intercept and stop the application flow to reach the next middleware.
+
+For example, you may want to use an authentication middleware to prevent un-authorized access to your application.
