@@ -8,7 +8,7 @@ The Router component provides several routers **implemented as middlewares**.
 
 ## The classic router
 
-`Stratify\Router\Router` (aka the "classic" router) routes HTTP requests to handlers.
+`Stratify\Router\Router` (aka the "classic" router) routes HTTP requests to handlers. It is internally based on the [Aura Router](http://auraphp.com/packages/Aura.Router/).
 
 Example:
 
