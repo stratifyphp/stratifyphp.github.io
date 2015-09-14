@@ -76,6 +76,11 @@
                                         Extended callables
                                     </a>
                                 </li>
+                                                            <li class="">
+                                    <a href="http://stratifyphp.github.io/docs/framework/templating.html">
+                                        Templating
+                                    </a>
+                                </li>
                                                     </ul>
                     </li>
                             </ul>
@@ -118,6 +123,31 @@ $app-&gt;run();</code></pre>
 <p>As you can see, a lot of freedom and no overhead.</p>
 <h2 id="composing-middlewares">Composing middlewares</h2>
 <p>Writing an application with one callable can work for very specific micro-services, but can be limited. If you want to create a more complex application, you can take full advantages of middlewares by piping them.</p>
+<pre><code class="language-php">$middleware = new MiddlewarePipe([
+
+    function ($request, $response, $next) {
+        $res-&gt;getBody()-&gt;write('Hello');
+        return $next($req, $res);        // call the next middleware
+    },
+
+    function ($request, $response, $next) {
+        $res-&gt;getBody()-&gt;write(' world');
+        return $res;
+    },
+
+]);
+
+$app = new Application($middleware);
+$app-&gt;run();
+// The application will always return "Hello world" as a response</code></pre>
+<p>Each middleware in the pipe must return a response. To do this, it can either:</p>
+<ul>
+<li>build the response</li>
+<li>call the next middleware in the pipe and return the result</li>
+<li>call the next middleware in the pipe, play with the response and return it</li>
+</ul>
+<p>That allows you to add any behavior you want <strong>before or after</strong> the request is processed by another middleware. You can also intercept and stop the application flow to reach the next middleware.</p>
+<p>For example, you may want to use an authentication middleware to prevent un-authorized access to your application.</p>
         </article>
 
     </div>

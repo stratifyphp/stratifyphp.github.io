@@ -76,6 +76,11 @@
                                         Extended callables
                                     </a>
                                 </li>
+                                                            <li class="">
+                                    <a href="http://stratifyphp.github.io/docs/framework/templating.html">
+                                        Templating
+                                    </a>
+                                </li>
                                                     </ul>
                     </li>
                             </ul>
@@ -239,10 +244,13 @@ $http = pipe([
     ]),
 ]);
 
-$app = new Application($http, $modules);</code></pre>
+$app = new Application($http, $modules);
+$app-&gt;runHttp();</code></pre>
 <h2 id="whats-next">What's next</h2>
+<p>Learn about:</p>
 <ul>
-<li>learn about <a href="modules.html">Modules</a></li>
+<li><a href="modules.html">modules</a></li>
+<li><a href="templating.html">templating</a></li>
 </ul>
         </article>
 

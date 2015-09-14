@@ -76,6 +76,11 @@
                                         Extended callables
                                     </a>
                                 </li>
+                                                            <li class="">
+                                    <a href="http://stratifyphp.github.io/docs/framework/templating.html">
+                                        Templating
+                                    </a>
+                                </li>
                                                     </ul>
                     </li>
                             </ul>
@@ -85,7 +90,7 @@
             <h1 id="the-router-component">The Router component</h1>
 <p>The Router component provides several routers <strong>implemented as middlewares</strong>.</p>
 <h2 id="the-classic-router">The classic router</h2>
-<p><code>Stratify\Router\Router</code> (aka the &quot;classic&quot; router) routes HTTP requests to handlers.</p>
+<p><code>Stratify\Router\Router</code> (aka the &quot;classic&quot; router) routes HTTP requests to handlers. It is internally based on the <a href="http://auraphp.com/packages/Aura.Router/">Aura Router</a>.</p>
 <p>Example:</p>
 <pre><code class="language-php">$router = new Router([
     '/' =&gt; function ($request, $response, $next) {
