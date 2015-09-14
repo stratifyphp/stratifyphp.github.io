@@ -43,3 +43,6 @@ documentation:
             extended-callables:
                 text: Extended callables
                 url: docs/framework/extended-callables.html
+            templating:
+                text: Templating
+                url: docs/framework/templating.html

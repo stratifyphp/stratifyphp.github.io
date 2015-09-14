@@ -228,8 +228,12 @@ $http = pipe([
 ]);
 
 $app = new Application($http, $modules);
+$app->runHttp();
 ```
 
 ## What's next
 
-- learn about [Modules](modules.md)
+Learn about:
+
+- [modules](modules.md)
+- [templating](templating.md)
